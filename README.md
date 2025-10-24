@@ -20,21 +20,21 @@ python main.py -c ./utils/conf.json
 
 下面我们首先定义一个服务端类Server，类中的主要函数包括以下几个。
 
-- **定义构造函数。**在构造函数中，服务端的工作包括：第一，将配置信息拷贝到服务端中；第二，按照配置中的模型信息获取模型，这里我们使用torchvision 的models模块内置的ResNet-18模型。
+- 定义构造函数。在构造函数中，服务端的工作包括：第一，将配置信息拷贝到服务端中；第二，按照配置中的模型信息获取模型，这里我们使用torchvision 的models模块内置的ResNet-18模型。
 
 ```python
 class Server(object):
 	def __init__(self, conf, eval_dataset):
 
 		self.conf = conf 
-	
+
 		self.global_model = models.get_model(self.conf["model_name"]) 
-	
+
 		self.eval_loader = torch.utils.data.DataLoader(eval_dataset,   
                       batch_size=self.conf["batch_size"], shuffle=True)
 ```
 
-- **定义模型聚合函数。**前面我们提到服务端的主要功能是进行模型的聚合，因此定义构造函数后，我们需要在类中定义模型聚合函数，通过接收客户端上传的模型，使用聚合函数更新全局模型。聚合方案有很多种，本案例我们采用经典的FedAvg 算法。
+- 定义模型聚合函数。前面我们提到服务端的主要功能是进行模型的聚合，因此定义构造函数后，我们需要在类中定义模型聚合函数，通过接收客户端上传的模型，使用聚合函数更新全局模型。聚合方案有很多种，本案例我们采用经典的FedAvg 算法。
 
 ```python
 def model_aggregate(self, weight_accumulator):
@@ -46,7 +46,7 @@ def model_aggregate(self, weight_accumulator):
 			data.add_(update_per_layer)
 ```
 
-- **定义模型评估函数。**对当前的全局模型，利用评估数据评估当前的全局模型性能。通常情况下，服务端的评估函数主要对当前聚合后的全局模型进行分析，用于判断当前的模型训练是需要进行下一轮迭代、还是提前终止，或者模型是否出现发散退化的现象。根据不同的结果，服务端可以采取不同的措施策略。
+- 定义模型评估函数。对当前的全局模型，利用评估数据评估当前的全局模型性能。通常情况下，服务端的评估函数主要对当前聚合后的全局模型进行分析，用于判断当前的模型训练是需要进行下一轮迭代、还是提前终止，或者模型是否出现发散退化的现象。根据不同的结果，服务端可以采取不同的措施策略。
 
 ```python
 def model_eval(self):
@@ -76,7 +76,7 @@ def model_eval(self):
 
 横向联邦学习的客户端主要功能是接收服务端的下发指令和全局模型，利用本地数据进行局部模型训练。与前一节一样，对于一个功能完善的联邦学习框架，客户端的功能同样相当复杂，比如需要考虑本地的资源（CPU、内存等）是否满足训练需要、当前的网络中断、当前的训练由于受到外界因素影响而中断等。读者如果对这些设计细节感兴趣，可以查看当前流行的联邦学习框架源代码和文档，比如FATE，获取更多的实现细节。本案例我们仅考虑客户端本地的模型训练细节。我们首先定义客户端类Client，类中的主要函数包括以下两种。
 
-- **定义构造函数。**在客户端构造函数中，客户端的主要工作包括：首先，将配置信息拷贝到客户端中；然后，按照配置中的模型信息获取模型，通常由服务端将模型参数传递给客户端，客户端将该全局模型覆盖掉本地模型；最后，配置本地训练数据，在本案例中，我们通过torchvision 的datasets 模块获取cifar10 数据集后按客户端ID切分，不同的客户端拥有不同的子数据集，相互之间没有交集。
+- 定义构造函数。在客户端构造函数中，客户端的主要工作包括：首先，将配置信息拷贝到客户端中；然后，按照配置中的模型信息获取模型，通常由服务端将模型参数传递给客户端，客户端将该全局模型覆盖掉本地模型；最后，配置本地训练数据，在本案例中，我们通过torchvision 的datasets 模块获取cifar10 数据集后按客户端ID切分，不同的客户端拥有不同的子数据集，相互之间没有交集。
 
 ```python
 class Client(object):
@@ -91,7 +91,7 @@ class Client(object):
 		self.train_loader = torch.utils.data.DataLoader(self.train_dataset, batch_size=conf["batch_size"], sampler=torch.utils.data.sampler.SubsetRandomSampler(train_indices))
 ```
 
-- **定义模型本地训练函数。**本例是一个图像分类的例子，因此，我们使用交叉熵作为本地模型的损失函数，利用梯度下降来求解并更新参数值，实现细节如下面代码块所示。
+- 定义模型本地训练函数。本例是一个图像分类的例子，因此，我们使用交叉熵作为本地模型的损失函数，利用梯度下降来求解并更新参数值，实现细节如下面代码块所示。
 
 ```python
 def local_train(self, model):
